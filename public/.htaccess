@@ -1,0 +1,6 @@
+RewriteEngine On
+
+# Enruta todo lo que no sea un archivo o carpeta existente hacia el front controller.
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ index.php [QSA,L]

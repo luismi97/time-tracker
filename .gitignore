@@ -1,0 +1,9 @@
+/vendor/
+/node_modules/
+.env
+storage/logs/*
+storage/sessions/*
+!storage/logs/.gitkeep
+!storage/sessions/.gitkeep
+public/assets/uploads/*
+!public/assets/uploads/.gitkeep
