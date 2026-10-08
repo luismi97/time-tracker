@@ -361,6 +361,10 @@ Decisiones tomadas para que el sistema quede completo y consistente:
   (editable en `Empleados > Editar`, **NO por defecto**), se descuenta 1 hora de las
   horas regulares de cada jornada trabajada **solo para efectos de pago** (las horas
   "trabajadas" que se muestran en pantalla y en el PDF no cambian).
+- **Empleados sin salario** (casilla "Sin salario" en `Empleados > Editar`, columna
+  `employees.is_paid`): pensado para practicantes o voluntarios. Registran horas
+  normalmente, pero no tienen salario ni reglas de pago; en listados, vista previa y
+  PDF aparece "Sin salario" en lugar de montos.
 - **Estado del empleado**: activar/desactivar un empleado tambien activa/desactiva su
   cuenta de acceso (`users.is_active`); un empleado inactivo no puede iniciar sesion.
 - **Visibilidad de salario**: el empleado nunca ve su salario por hora, sus reglas de

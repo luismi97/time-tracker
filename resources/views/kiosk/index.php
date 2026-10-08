@@ -8,17 +8,23 @@
     </div>
 
     <?php if (!isset($employee)): ?>
-        <form method="POST" action="<?= e($kioskUrl) ?>/lookup" class="space-y-4">
+        <!-- Sin campos type="password" ni autocompletado: el kiosco es compartido y el navegador
+             no debe ofrecer correos/contrasenas guardados ni pedir guardarlos. -->
+        <form method="POST" action="<?= e($kioskUrl) ?>/lookup" class="space-y-4" autocomplete="off">
             <?= csrf_field() ?>
             <div>
                 <label for="employee_number" class="block text-sm font-medium text-slate-700 dark:text-slate-300">Codigo de empleado</label>
                 <input type="text" id="employee_number" name="employee_number" required autofocus placeholder="Ej: 001"
+                       inputmode="numeric" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+                       data-lpignore="true" data-1p-ignore
                        class="mt-1 block w-full rounded-lg border-gray-300 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-center text-lg tracking-widest">
             </div>
             <div>
                 <label for="document_pin" class="block text-sm font-medium text-slate-700 dark:text-slate-300">Ultimos 5 digitos de tu cedula</label>
-                <input type="password" id="document_pin" name="document_pin" required inputmode="numeric" pattern="[0-9]{5}" maxlength="5"
-                       autocomplete="off" placeholder="&bull;&bull;&bull;&bull;&bull;" title="Escribe los ultimos 5 digitos de tu cedula"
+                <input type="text" id="document_pin" name="document_pin" required inputmode="numeric" pattern="[0-9]{5}" maxlength="5"
+                       autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore
+                       style="-webkit-text-security: disc;"
+                       placeholder="&bull;&bull;&bull;&bull;&bull;" title="Escribe los ultimos 5 digitos de tu cedula"
                        class="mt-1 block w-full rounded-lg border-gray-300 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-center text-lg tracking-widest">
             </div>
             <button type="submit" class="w-full rounded-lg bg-indigo-600 px-4 py-2.5 text-white font-semibold hover:bg-indigo-700 transition">

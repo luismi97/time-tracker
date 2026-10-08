@@ -25,6 +25,24 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Checkbox que oculta (y deshabilita, para que no se validen ni envien) un grupo de campos.
+    document.querySelectorAll('[data-hides]').forEach((checkbox) => {
+        const target = document.querySelector(checkbox.dataset.hides);
+        if (!target) {
+            return;
+        }
+
+        const update = () => {
+            target.classList.toggle('hidden', checkbox.checked);
+            target.querySelectorAll('input, select, textarea').forEach((field) => {
+                field.disabled = checkbox.checked;
+            });
+        };
+
+        checkbox.addEventListener('change', update);
+        update();
+    });
+
     document.querySelectorAll('[data-confirm]').forEach((form) => {
         form.addEventListener('submit', (event) => {
             const message = form.getAttribute('data-confirm') || 'Estas seguro?';

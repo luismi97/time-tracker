@@ -48,9 +48,13 @@ class PdfReportService
         $pdf->Cell(0, 6, 'Correo: ' . $employee['email'], 0, 1);
         $pdf->Cell(0, 6, 'Telefono: ' . ($employee['phone'] ?: 'N/A'), 0, 1);
         $pdf->Cell(0, 6, 'Direccion: ' . ($employee['address'] ?: 'N/A'), 0, 1);
-        $pdf->Cell(0, 6, 'Salario por hora: ' . $this->money((float) $employee['hourly_rate']), 0, 1);
-        $pdf->Cell(0, 6, 'Paga horas extra (1.5x): ' . (!empty($employee['overtime_paid']) ? 'Si' : 'No'), 0, 1);
-        $pdf->Cell(0, 6, 'Hora de almuerzo (no se paga): ' . (!empty($employee['has_lunch_break']) ? 'Si' : 'No'), 0, 1);
+        if (!empty($employee['is_paid'])) {
+            $pdf->Cell(0, 6, 'Salario por hora: ' . $this->money((float) $employee['hourly_rate']), 0, 1);
+            $pdf->Cell(0, 6, 'Paga horas extra (1.5x): ' . (!empty($employee['overtime_paid']) ? 'Si' : 'No'), 0, 1);
+            $pdf->Cell(0, 6, 'Hora de almuerzo (no se paga): ' . (!empty($employee['has_lunch_break']) ? 'Si' : 'No'), 0, 1);
+        } else {
+            $pdf->Cell(0, 6, 'Salario: Sin salario', 0, 1);
+        }
         $pdf->Ln(4);
 
         $widths = [28, 28, 28, 22, 22, 27];
@@ -82,8 +86,12 @@ class PdfReportService
         $pdf->SetFont('Arial', 'B', 11);
         $pdf->Cell(0, 7, 'Total de horas trabajadas: ' . number_format($summary['total_hours'], 2), 0, 1);
         $pdf->Cell(0, 7, 'Total de horas extra: ' . number_format($summary['total_overtime'], 2), 0, 1);
-        $pdf->Cell(0, 7, 'Total de horas pagadas: ' . number_format($summary['total_paid_hours'], 2), 0, 1);
-        $pdf->Cell(0, 7, 'Total a pagar: ' . $this->money($summary['total_pay']), 0, 1);
+        if ($summary['is_paid']) {
+            $pdf->Cell(0, 7, 'Total de horas pagadas: ' . number_format($summary['total_paid_hours'], 2), 0, 1);
+            $pdf->Cell(0, 7, 'Total a pagar: ' . $this->money($summary['total_pay']), 0, 1);
+        } else {
+            $pdf->Cell(0, 7, 'Total a pagar: Sin salario', 0, 1);
+        }
     }
 
     /**

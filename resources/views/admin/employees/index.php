@@ -37,7 +37,7 @@
                     <td class="py-3 px-5 font-medium text-slate-800 dark:text-slate-100"><?= e($employeeRow['full_name']) ?></td>
                     <td class="py-3 px-5 dark:text-slate-300"><?= e($employeeRow['email']) ?></td>
                     <td class="py-3 px-5 dark:text-slate-300"><?= e($employeeRow['phone'] ?? '-') ?></td>
-                    <td class="py-3 px-5 dark:text-slate-300"><?= format_money((float) $employeeRow['hourly_rate']) ?></td>
+                    <td class="py-3 px-5 dark:text-slate-300"><?= $employeeRow['is_paid'] ? format_money((float) $employeeRow['hourly_rate']) : '<span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-sky-100 dark:bg-sky-900/40 text-sky-800 dark:text-sky-300">Sin salario</span>' ?></td>
                     <td class="py-3 px-5 dark:text-slate-300"><?= format_date($employeeRow['hire_date']) ?></td>
                     <td class="py-3 px-5">
                         <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium <?= $employeeRow['status'] === 'active' ? 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300' : 'bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-400' ?>">
@@ -90,7 +90,7 @@
                 </div>
                 <div>
                     <dt class="text-xs text-slate-400 dark:text-slate-500">Salario/h</dt>
-                    <dd class="dark:text-slate-300"><?= format_money((float) $employeeRow['hourly_rate']) ?></dd>
+                    <dd class="dark:text-slate-300"><?= $employeeRow['is_paid'] ? format_money((float) $employeeRow['hourly_rate']) : '<span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-sky-100 dark:bg-sky-900/40 text-sky-800 dark:text-sky-300">Sin salario</span>' ?></dd>
                 </div>
                 <div>
                     <dt class="text-xs text-slate-400 dark:text-slate-500">Ingreso</dt>

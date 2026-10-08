@@ -104,6 +104,9 @@ class EmployeeController
 
     private function collectInput(): array
     {
+        $isPaid = !isset($_POST['unpaid']);
+
+        // Sin salario: no aplica tarifa ni reglas de pago.
         return [
             'full_name' => trim($_POST['full_name'] ?? ''),
             'email' => trim($_POST['email'] ?? ''),
@@ -111,9 +114,10 @@ class EmployeeController
             'address' => trim($_POST['address'] ?? ''),
             'document_id' => trim($_POST['document_id'] ?? ''),
             'hire_date' => $_POST['hire_date'] ?? '',
-            'hourly_rate' => $_POST['hourly_rate'] ?? '',
-            'overtime_paid' => isset($_POST['overtime_paid']) ? 1 : 0,
-            'has_lunch_break' => isset($_POST['has_lunch_break']) ? 1 : 0,
+            'is_paid' => $isPaid ? 1 : 0,
+            'hourly_rate' => $isPaid ? ($_POST['hourly_rate'] ?? '') : 0,
+            'overtime_paid' => $isPaid && isset($_POST['overtime_paid']) ? 1 : 0,
+            'has_lunch_break' => $isPaid && isset($_POST['has_lunch_break']) ? 1 : 0,
             'status' => $_POST['status'] ?? 'active',
             'password' => $_POST['password'] ?? '',
         ];

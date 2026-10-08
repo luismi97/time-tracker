@@ -82,8 +82,13 @@
                     </td>
                     <td class="py-3 px-5 dark:text-slate-300"><?= format_hours($row['summary']['total_hours']) ?></td>
                     <td class="py-3 px-5 dark:text-slate-300"><?= format_hours($row['summary']['total_overtime']) ?></td>
+                    <?php if ($row['summary']['is_paid']): ?>
                     <td class="py-3 px-5 dark:text-slate-300"><?= format_hours($row['summary']['total_paid_hours']) ?></td>
                     <td class="py-3 px-5 font-medium dark:text-slate-100"><?= format_money($row['summary']['total_pay']) ?></td>
+                    <?php else: ?>
+                    <td class="py-3 px-5 text-slate-400 dark:text-slate-500">-</td>
+                    <td class="py-3 px-5"><span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-sky-100 dark:bg-sky-900/40 text-sky-800 dark:text-sky-300">Sin salario</span></td>
+                    <?php endif; ?>
                 </tr>
                 <?php endforeach; ?>
                 <?php if (!$previewRows): ?>

@@ -7,6 +7,8 @@ namespace App\Services;
  *
  * - Horas extra (>8h/dia): se pagan a 1.5x solo si employees.overtime_paid = 1;
  *   si no, se pagan como horas normales (mismo salario por hora).
+ * - Sin salario (employees.is_paid = 0, p. ej. practicantes): se cuentan las horas
+ *   trabajadas, pero no hay horas pagadas ni monto a pagar.
  * - Hora de almuerzo: si employees.has_lunch_break = 1, se resta 1 hora de las
  *   horas regulares de cada jornada trabajada antes de calcular el pago (las
  *   horas "trabajadas" que se muestran no cambian, solo el monto a pagar).
@@ -17,7 +19,8 @@ class PayrollService
 
     public function summarize(array $records, array $employee): array
     {
-        $hourlyRate = (float) $employee['hourly_rate'];
+        $isPaid = (bool) ($employee['is_paid'] ?? true);
+        $hourlyRate = $isPaid ? (float) $employee['hourly_rate'] : 0.0;
         $overtimePaid = !empty($employee['overtime_paid']);
         $hasLunchBreak = !empty($employee['has_lunch_break']);
 
@@ -37,12 +40,13 @@ class PayrollService
 
             $totalHours += $hoursWorked;
             $totalOvertime += $overtime;
-            $totalPaidHours += $regular + $overtime;
+            $totalPaidHours += $isPaid ? $regular + $overtime : 0.0;
             $totalPay += $regular * $hourlyRate;
             $totalPay += $overtime * $hourlyRate * ($overtimePaid ? 1.5 : 1.0);
         }
 
         return [
+            'is_paid' => $isPaid,
             'total_hours' => round($totalHours, 2),
             'total_overtime' => round($totalOvertime, 2),
             'total_paid_hours' => round($totalPaidHours, 2),

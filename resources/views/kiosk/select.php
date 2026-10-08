@@ -7,7 +7,7 @@
     <form method="GET" action="/kiosk" class="space-y-4">
         <div>
             <label for="company" class="block text-sm font-medium text-slate-700 dark:text-slate-300">Codigo de empresa</label>
-            <input type="text" id="company" name="company" required autofocus placeholder="Ej: mi-empresa"
+            <input type="text" id="company" name="company" required autofocus placeholder="Ej: mi-empresa" autocomplete="off" spellcheck="false"
                    class="mt-1 block w-full rounded-lg border-gray-300 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-center text-lg">
             <p class="mt-1 text-xs text-slate-400 dark:text-slate-500">Lo encuentras en Configuracion &rarr; Registro de horas, o pideselo a tu administrador.</p>
         </div>

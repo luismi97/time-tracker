@@ -42,6 +42,17 @@
                class="mt-1 w-full rounded-lg border-gray-300 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 focus:border-indigo-500 focus:ring-indigo-500">
         <?php if ($error = field_error('hire_date')): ?><p class="mt-1 text-sm text-red-600 dark:text-red-400"><?= e($error) ?></p><?php endif; ?>
     </div>
+    <?php $unpaidChecked = old_input() ? old_checked('unpaid') : (isset($employeeData['is_paid']) && !$employeeData['is_paid']); ?>
+    <label class="flex items-start gap-2 rounded-lg border border-gray-200 dark:border-slate-700 p-3 text-sm text-slate-700 dark:text-slate-300 sm:mt-6">
+        <input type="checkbox" name="unpaid" value="1" data-hides="#paid-fields" <?= $unpaidChecked ? 'checked' : '' ?>
+               class="mt-0.5 rounded border-gray-300 dark:border-slate-600 text-indigo-600 focus:ring-indigo-500">
+        <span>
+            <span class="block font-medium text-slate-800 dark:text-slate-100">Sin salario</span>
+            <span class="block text-xs text-slate-500 dark:text-slate-400">Practicantes o voluntarios: registran horas, pero no generan pago.</span>
+        </span>
+    </label>
+    <!-- Datos de pago: se ocultan (y no se envian) si el empleado no tiene salario. -->
+    <div id="paid-fields" class="sm:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
     <div>
         <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">Salario por hora (<?= e(currency_symbol()) ?>)</label>
         <input type="number" step="0.01" min="0" name="hourly_rate" required value="<?= old('hourly_rate', (string) ($employeeData['hourly_rate'] ?? '')) ?>"
@@ -69,6 +80,7 @@
                 <span class="block text-xs text-slate-500 dark:text-slate-400">Se descuenta 1 hora del pago en cada jornada trabajada.</span>
             </span>
         </label>
+    </div>
     </div>
     <div>
         <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">Estado</label>

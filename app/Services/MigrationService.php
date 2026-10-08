@@ -120,6 +120,7 @@ class MigrationService
             '010' => $this->tableExists('companies'),
             '011' => $this->columnExists('settings', 'allowed_ips'),
             '012' => $this->columnExists('settings', 'currency'),
+            '013' => $this->columnExists('employees', 'is_paid'),
             default => false,
         };
     }

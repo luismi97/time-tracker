@@ -119,8 +119,8 @@ class Employee
     public static function create(array $data, int $userId): int
     {
         $stmt = Database::connection()->prepare(
-            'INSERT INTO employees (company_id, user_id, employee_number, full_name, phone, address, document_id, hire_date, hourly_rate, overtime_paid, has_lunch_break, status)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+            'INSERT INTO employees (company_id, user_id, employee_number, full_name, phone, address, document_id, hire_date, is_paid, hourly_rate, overtime_paid, has_lunch_break, status)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
         );
         $stmt->execute([
             Tenant::id(),
@@ -131,6 +131,7 @@ class Employee
             $data['address'] ?: null,
             $data['document_id'] ?: null,
             $data['hire_date'],
+            !empty($data['is_paid']) ? 1 : 0,
             $data['hourly_rate'],
             !empty($data['overtime_paid']) ? 1 : 0,
             !empty($data['has_lunch_break']) ? 1 : 0,
@@ -154,7 +155,7 @@ class Employee
     public static function update(int $id, array $data): void
     {
         $stmt = Database::connection()->prepare(
-            'UPDATE employees SET full_name = ?, phone = ?, address = ?, document_id = ?, hire_date = ?, hourly_rate = ?, overtime_paid = ?, has_lunch_break = ?, status = ?
+            'UPDATE employees SET full_name = ?, phone = ?, address = ?, document_id = ?, hire_date = ?, is_paid = ?, hourly_rate = ?, overtime_paid = ?, has_lunch_break = ?, status = ?
              WHERE id = ? AND company_id = ?'
         );
         $stmt->execute([
@@ -163,6 +164,7 @@ class Employee
             $data['address'] ?: null,
             $data['document_id'] ?: null,
             $data['hire_date'],
+            !empty($data['is_paid']) ? 1 : 0,
             $data['hourly_rate'],
             !empty($data['overtime_paid']) ? 1 : 0,
             !empty($data['has_lunch_break']) ? 1 : 0,
