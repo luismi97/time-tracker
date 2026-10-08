@@ -26,39 +26,37 @@ function config(string $key, mixed $default = null): mixed
     return $cache[$file][$rest] ?? $default;
 }
 
-/** Nombre del sitio configurado por el administrador (con respaldo al valor de config/app.php). */
+/** Nombre de la empresa activa (o el nombre de la app en el login y el panel del super admin). */
 function site_name(): string
 {
-    static $name = null;
+    $company = \App\Core\Tenant::company();
 
-    if ($name === null) {
-        try {
-            $settings = \App\Models\Settings::get();
-            $name = $settings['app_name'] !== '' ? $settings['app_name'] : config('app.name');
-        } catch (\Throwable $e) {
-            $name = config('app.name');
-        }
-    }
-
-    return $name;
+    return $company && $company['name'] !== '' ? $company['name'] : config('app.name');
 }
 
-/** Ruta publica del logo configurado (null si no se ha subido uno). */
+/** Ruta publica del logo de la empresa activa (null si no hay empresa o no se ha subido uno). */
 function site_logo(): ?string
 {
-    static $logo = null;
-    static $loaded = false;
-
-    if (!$loaded) {
-        $loaded = true;
-        try {
-            $logo = \App\Models\Settings::get()['logo_path'] ?: null;
-        } catch (\Throwable $e) {
-            $logo = null;
-        }
+    if (!\App\Core\Tenant::check()) {
+        return null;
     }
 
-    return $logo;
+    try {
+        return \App\Models\Settings::get()['logo_path'] ?: null;
+    } catch (\Throwable $e) {
+        return null;
+    }
+}
+
+/** Convierte un texto en un codigo apto para URL: "Cafe Lopez S.A." -> "cafe-lopez-s-a". */
+function slugify(string $value): string
+{
+    $value = strtr(mb_strtolower($value, 'UTF-8'), [
+        'á' => 'a', 'é' => 'e', 'í' => 'i', 'ó' => 'o', 'ú' => 'u', 'ü' => 'u', 'ñ' => 'n',
+    ]);
+    $value = trim((string) preg_replace('/[^a-z0-9]+/', '-', $value), '-');
+
+    return rtrim(substr($value, 0, 50), '-');
 }
 
 function asset(string $path): string
@@ -164,9 +162,25 @@ function format_hours(?float $hours): string
     return number_format((float) $hours, 2) . ' h';
 }
 
+/** Codigo de la moneda configurada por la empresa activa (CRC, USD o EUR). */
+function currency_code(): string
+{
+    if (!\App\Core\Tenant::check()) {
+        return 'USD';
+    }
+
+    $code = \App\Models\Settings::get()['currency'] ?? 'USD';
+    return isset(\App\Models\Settings::CURRENCIES[$code]) ? $code : 'USD';
+}
+
+function currency_symbol(): string
+{
+    return \App\Models\Settings::CURRENCIES[currency_code()]['symbol'];
+}
+
 function format_money(?float $amount): string
 {
-    return '$' . number_format((float) $amount, 2);
+    return currency_symbol() . number_format((float) $amount, 2);
 }
 
 function format_date(?string $date): string

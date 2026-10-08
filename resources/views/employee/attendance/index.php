@@ -10,7 +10,7 @@
         <p class="text-sm text-slate-500 dark:text-slate-400">
             El registro de horas se realiza en el kiosco de asistencia.
         </p>
-        <a href="/kiosk" class="text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300">
+        <a href="<?= e($kioskUrl) ?>" class="text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300">
             Ir al kiosco &rarr;
         </a>
     </div>

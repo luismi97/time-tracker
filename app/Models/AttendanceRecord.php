@@ -3,8 +3,13 @@
 namespace App\Models;
 
 use App\Core\Database;
+use App\Core\Tenant;
 use DateTimeImmutable;
 
+/**
+ * Los metodos por empleado reciben ids ya validados contra la empresa activa;
+ * los listados y totales globales filtran por Tenant::id() via employees.company_id.
+ */
 class AttendanceRecord
 {
     public static function openFor(int $employeeId): ?array
@@ -33,7 +38,7 @@ class AttendanceRecord
             );
             $stmt->execute([$employeeId, $now->format('Y-m-d'), $now->format('Y-m-d H:i:s')]);
             $pdo->commit();
-            return ['success' => true];
+            return ['success' => true, 'clock_in' => $now->format('Y-m-d H:i:s')];
         } catch (\Throwable $e) {
             $pdo->rollBack();
             throw $e;
@@ -68,7 +73,12 @@ class AttendanceRecord
             );
             $stmt->execute([$now->format('Y-m-d H:i:s'), $hours, $overtime, $open['id']]);
             $pdo->commit();
-            return ['success' => true];
+            return [
+                'success' => true,
+                'clock_in' => $open['clock_in'],
+                'clock_out' => $now->format('Y-m-d H:i:s'),
+                'hours_worked' => $hours,
+            ];
         } catch (\Throwable $e) {
             $pdo->rollBack();
             throw $e;
@@ -116,10 +126,12 @@ class AttendanceRecord
     public static function sumHoursGlobal(string $start, string $end): float
     {
         $stmt = Database::connection()->prepare(
-            "SELECT COALESCE(SUM(hours_worked), 0) AS total FROM attendance_records
-             WHERE work_date BETWEEN ? AND ? AND status = 'closed'"
+            "SELECT COALESCE(SUM(attendance_records.hours_worked), 0) AS total
+             FROM attendance_records JOIN employees ON employees.id = attendance_records.employee_id
+             WHERE employees.company_id = ? AND attendance_records.work_date BETWEEN ? AND ?
+                AND attendance_records.status = 'closed'"
         );
-        $stmt->execute([$start, $end]);
+        $stmt->execute([Tenant::id(), $start, $end]);
         return (float) $stmt->fetch()['total'];
     }
 
@@ -148,8 +160,8 @@ class AttendanceRecord
 
     private static function buildFilters(array $filters): array
     {
-        $conditions = [];
-        $params = [];
+        $conditions = ['employees.company_id = ?'];
+        $params = [Tenant::id()];
 
         if (!empty($filters['employee_id'])) {
             $conditions[] = 'attendance_records.employee_id = ?';
@@ -166,17 +178,18 @@ class AttendanceRecord
             $params[] = $filters['end'];
         }
 
-        $where = $conditions ? 'WHERE ' . implode(' AND ', $conditions) : '';
-        return [$where, $params];
+        return ['WHERE ' . implode(' AND ', $conditions), $params];
     }
 
     public static function recent(int $limit = 8): array
     {
-        $stmt = Database::connection()->query(
+        $stmt = Database::connection()->prepare(
             'SELECT attendance_records.*, employees.full_name
              FROM attendance_records JOIN employees ON employees.id = attendance_records.employee_id
+             WHERE employees.company_id = ?
              ORDER BY attendance_records.created_at DESC LIMIT ' . (int) $limit
         );
+        $stmt->execute([Tenant::id()]);
         return $stmt->fetchAll();
     }
 

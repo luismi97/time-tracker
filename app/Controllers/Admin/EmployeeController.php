@@ -124,6 +124,7 @@ class EmployeeController
         $rules = [
             'full_name' => 'required|max:150',
             'email' => 'required|email|max:150',
+            'document_id' => 'max:50',
             'hire_date' => 'required|date',
             'hourly_rate' => 'required|numeric|min_value:0',
             'status' => 'required|in:active,inactive',
@@ -139,6 +140,12 @@ class EmployeeController
 
         if (empty($errors['email']) && User::emailExists($data['email'], $excludeUserId)) {
             $errors['email'] = 'Ese correo ya esta en uso.';
+        }
+
+        if (empty($errors['document_id']) && Employee::kioskPin($data['document_id']) === null) {
+            $errors['document_id'] = $data['document_id'] === ''
+                ? 'La cedula es obligatoria.'
+                : 'La cedula debe tener al menos 5 digitos.';
         }
 
         return $errors;

@@ -22,15 +22,16 @@
             Iniciar sesion
         </button>
     </form>
+    <?php if (config('app.env') !== 'production'): ?>
     <p class="mt-6 text-center text-xs text-slate-400 dark:text-slate-500">
+        Super admin demo: superadmin@timetracking.test / SuperAdmin123!<br>
         Admin demo: admin@timetracking.test / Admin123!<br>
         Empleado demo: empleado@timetracking.test / Employee123!
     </p>
-    <?php if (\App\Models\Settings::get()['attendance_mode'] === 'kiosk'): ?>
+    <?php endif; ?>
     <div class="mt-4 text-center">
         <a href="/kiosk" class="text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300">
             &rarr; Marcar entrada / salida con codigo de empleado
         </a>
     </div>
-    <?php endif; ?>
 </div>

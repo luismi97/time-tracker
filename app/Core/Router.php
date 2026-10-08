@@ -6,6 +6,7 @@ use App\Middleware\AdminMiddleware;
 use App\Middleware\AuthMiddleware;
 use App\Middleware\EmployeeMiddleware;
 use App\Middleware\GuestMiddleware;
+use App\Middleware\SuperAdminMiddleware;
 use Closure;
 
 class Router
@@ -15,6 +16,7 @@ class Router
         'guest' => GuestMiddleware::class,
         'admin' => AdminMiddleware::class,
         'employee' => EmployeeMiddleware::class,
+        'super_admin' => SuperAdminMiddleware::class,
     ];
 
     private array $routes = [];

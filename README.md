@@ -117,10 +117,11 @@ docker compose down -v     # detiene y borra tambien la base de datos
 ## Credenciales iniciales
 
 El script de semilla (`database/migrations/005_seed_data.sql`) crea dos cuentas de
-ejemplo:
+ejemplo en la empresa `principal`, y `010_multi_company.sql` crea el super administrador:
 
 | Rol | Correo | Contrasena |
 |---|---|---|
+| Super administrador | `superadmin@timetracking.test` | `SuperAdmin123!` |
 | Administrador | `admin@timetracking.test` | `Admin123!` |
 | Empleado (demo) | `empleado@timetracking.test` | `Employee123!` |
 
@@ -139,8 +140,8 @@ la contrasena `Employee123!` (mismo hash que el empleado demo). Correos:
 (inactivo), `diego.solano@`, `valeria.chinchilla@` (inactivo), todos
 `@timetracking.test`.
 
-Cada empleado (incluido el demo) tiene un **numero de empleado** correlativo (`001`,
-`002`, ...) asignado automaticamente al crearlo (`Employee::nextEmployeeNumber()`);
+Cada empleado (incluido el demo) tiene un **numero de empleado** correlativo dentro de
+su empresa (`001`, `002`, ...) asignado automaticamente al crearlo (`Employee::nextEmployeeNumber()`);
 se muestra en el listado de administracion, en el perfil del empleado y en los PDFs,
 y no es editable una vez asignado.
 
@@ -151,8 +152,28 @@ y no es editable una vez asignado.
 ### Iniciar sesion
 
 Ir a `/login`, ingresar correo y contrasena. Segun el rol del usuario se redirige a
-`/admin/dashboard` o `/employee/dashboard`. Las cuentas inactivas no pueden iniciar
-sesion aunque la contrasena sea correcta.
+`/super/companies`, `/admin/dashboard` o `/employee/dashboard`. Las cuentas inactivas,
+o de una empresa inactiva, no pueden iniciar sesion aunque la contrasena sea correcta.
+
+### Multiempresa (super administrador)
+
+Una sola instalacion aloja varias empresas **independientes**: cada una tiene sus
+propios empleados, registros de asistencia, reportes, nombre, logo, modo de registro y
+horario, y sus usuarios solo ven los datos de su empresa. El super administrador
+(`/super/companies`):
+
+- Crea empresas (nombre, codigo para la URL del kiosco, estado) junto con su primer
+  administrador.
+- Edita nombre, codigo y estado. Una empresa **inactiva** bloquea el inicio de sesion
+  y el kiosco de todos sus usuarios (las sesiones abiertas se cierran).
+- Agrega, activa/desactiva, cambia la contrasena o elimina administradores de cada
+  empresa.
+- Con **Gestionar** entra al panel de administracion normal de esa empresa (empleados,
+  registros, reportes, configuracion); un aviso indica que empresa esta gestionando
+  y permite volver a la lista.
+- Elimina una empresa con todos sus datos (en cascada).
+
+Los correos de acceso son unicos en toda la instalacion.
 
 ### Crear empleados (administrador)
 
@@ -173,14 +194,48 @@ servidor:
   extra del dia.
 
 Si el administrador activo el modo kiosco (ver Configuracion), esta pantalla no
-muestra los botones y en su lugar enlaza a `/kiosk`.
+muestra los botones y en su lugar enlaza al kiosco de su empresa.
 
 ### Kiosco de asistencia con codigo de empleado
 
 Cuando `Configuracion > Registro de horas` esta en modo "kiosco", cualquier persona
-puede abrir `/kiosk` (sin iniciar sesion), escribir su numero de empleado (`001`,
-`002`, ...) y marcar entrada o salida. Al marcar la salida se muestra un mensaje con
+puede abrir `/kiosk/{codigo-empresa}` (sin iniciar sesion; `/kiosk` pide el codigo de
+empresa), escribir su numero de empleado (`001`,
+`002`, ...) junto con los **ultimos 5 digitos de su cedula** (obligatoria al crear el
+empleado) y marcar entrada o salida. La verificacion dura 2 minutos y sirve para una
+sola marca. Al marcar, el kiosco vuelve a su pantalla principal con un mensaje de
+confirmacion (en la salida incluye entrada, salida y horas trabajadas); si nadie marca,
+regresa solo al vencer la verificacion. Al marcar la salida se muestra un mensaje con
 la hora de entrada y el total de horas trabajadas en esa jornada.
+
+### Moneda
+
+`Configuracion > General > Moneda` define por empresa si los montos se muestran en
+colones (₡), dolares ($) o euros (€): salarios, vista previa de reportes y PDFs. Solo
+cambia el simbolo; los montos guardados no se convierten. En el PDF los colones se
+escriben `CRC` porque las fuentes de FPDF no incluyen el simbolo ₡.
+
+### Migraciones desde el navegador
+
+Con `MIGRATE_TOKEN` definido en `.env` (minimo 16 caracteres), abrir
+`/migrate?token=EL_TOKEN` muestra las migraciones pendientes y un boton para
+ejecutarlas en orden. Cada archivo ejecutado se registra en la tabla `migrations` y no
+se repite. En bases creadas antes de esta herramienta (importando los `.sql` a mano o
+con Docker), la primera visita detecta por el esquema que migraciones ya estaban
+aplicadas. Sin token, o con uno incorrecto, la URL responde 404.
+
+### Red autorizada (restriccion por IP)
+
+En `Configuracion > Red autorizada para empleados` cada empresa puede indicar las IPs o
+rangos CIDR (uno por linea, IPv4 o IPv6) desde donde sus **empleados** pueden iniciar
+sesion y usar el kiosco. Fuera de esa red el login y el kiosco se rechazan, y un
+empleado con sesion abierta la pierde en su siguiente peticion. Los administradores y
+el super admin pueden entrar desde cualquier lugar. Vacio = sin restriccion. La
+pantalla muestra la IP actual del usuario y un boton para agregarla.
+
+La IP del cliente se toma de `REMOTE_ADDR`; si la peticion viene de un proxy de
+confianza (`TRUSTED_PROXIES` en `.env`, por defecto `127.0.0.1,::1`, que cubre el
+Nginx/Varnish de Cloudways) se usa la IP real de `X-Forwarded-For`.
 
 ### Generar reportes y PDFs (administrador)
 
@@ -212,9 +267,9 @@ asistencia por empleado, dia, semana, mes, ano o rango personalizado, con pagina
 
 ```
 app/
-  Controllers/       Controladores HTTP (Auth, Admin, Employee)
+  Controllers/       Controladores HTTP (Auth, Admin, Employee, SuperAdmin)
   Core/               Nucleo: Router, Database (PDO), Auth, Session, Csrf, Validator, Paginator
-  Middleware/         Autenticacion, control de roles (auth/admin/employee/guest)
+  Middleware/         Autenticacion, control de roles (auth/admin/employee/super_admin/guest)
   Models/             Acceso a datos con consultas preparadas (User, Employee, AttendanceRecord, Role)
   Services/           Logica de negocio (AttendanceService, PayrollService, PdfReportService, EmployeeService)
   Support/            Utilidades (DateRange: resuelve dia/semana/mes/anio/rango)
@@ -255,24 +310,28 @@ docker/
 
 Modelo normalizado con llaves foraneas e indices (ver `database/migrations/`):
 
-- **`roles`**: catalogo de roles (`admin`, `employee`).
+- **`companies`**: empresas independientes (nombre, codigo/slug unico, estado).
+- **`roles`**: catalogo de roles (`admin`, `employee`, `super_admin`).
 - **`users`**: credenciales de acceso (correo, hash de contrasena, estado activo,
-  ultimo acceso) enlazadas a `roles`.
+  ultimo acceso) enlazadas a `roles` y a su empresa (`company_id`, NULL solo para el
+  super admin).
 - **`employees`**: datos personales y laborales del empleado (numero de empleado
-  correlativo unico, nombre, telefono, direccion, documento opcional, fecha de
+  correlativo unico por empresa, nombre, telefono, direccion, documento opcional, fecha de
   ingreso, salario por hora, `overtime_paid`, `has_lunch_break`, estado
   activo/inactivo), enlazados 1 a 1 con `users`.
 - **`attendance_records`**: cada jornada de un empleado (fecha, hora de entrada, hora
   de salida, horas trabajadas, horas extra, estado abierto/cerrado), enlazada a
   `employees`.
-- **`settings`**: fila unica con la configuracion global (nombre del sitio, logo,
-  modo de registro de horas, horario del negocio).
+- **`settings`**: una fila por empresa (logo, modo de registro de horas, horario del
+  negocio); el nombre mostrado es `companies.name`.
 - **`business_hours`**: horario manual por dia de la semana (0=Domingo...6=Sabado),
   usado cuando el horario no es "24 horas" ni "mismo horario todos los dias".
 
 Relaciones e integridad:
 
 - `users.role_id -> roles.id` (`ON DELETE RESTRICT`)
+- `users`, `employees`, `settings` y `business_hours` `.company_id -> companies.id`
+  (`ON DELETE CASCADE`); `employee_number` es unico por empresa.
 - `employees.user_id -> users.id` (`ON DELETE CASCADE`, unico por usuario)
 - `attendance_records.employee_id -> employees.id` (`ON DELETE CASCADE`)
 - Indices en `employees.status`, `employees.full_name`,
@@ -314,15 +373,15 @@ Decisiones tomadas para que el sistema quede completo y consistente:
   seccion (pagina) por empleado con su propio detalle y total.
 - **Registro de horas: login vs. kiosco** (`Configuracion > Registro de horas`): el
   administrador elige si los empleados marcan su horario iniciando sesion (por
-  defecto) o escribiendo su numero de empleado en `/kiosk` (pantalla publica, sin
+  defecto) o escribiendo su numero de empleado en `/kiosk/{codigo-empresa}` (pantalla publica, sin
   iniciar sesion, pensada para un dispositivo compartido). Al activar el modo kiosco:
   - `/employee/attendance` deja de mostrar los botones de marcar y en su lugar enlaza
     a `/kiosk`; el backend tambien rechaza `clock-in`/`clock-out` autenticados.
-  - `/kiosk` deja de estar disponible (redirige a `/login`) si el modo es "login".
+  - El kiosco de la empresa deja de estar disponible si el modo es "login".
   - Al marcar salida en el kiosco se muestra un mensaje con la hora de entrada y las
     horas trabajadas de esa jornada.
 - **Nombre y logo personalizables** (`Configuracion > General`): el nombre mostrado
-  en el sidebar, login y titulos de pagina, y el logo (PNG/JPG/WEBP/SVG, maximo 2MB)
+  en el sidebar, kiosco, PDFs y titulos de pagina (el nombre de la empresa), y el logo (PNG/JPG/WEBP/SVG, maximo 2MB)
   se guardan en la tabla `settings` y se sirven desde `public/assets/uploads/`.
 - **Horario del negocio** (`Configuracion > Horario de atencion`): permite marcar
   "Abierto 24 horas" o "Abierto los 7 dias" (mismo horario para todos los dias) para

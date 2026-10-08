@@ -12,6 +12,6 @@ class HomeController
             redirect('/login');
         }
 
-        redirect(Auth::isAdmin() ? '/admin/dashboard' : '/employee/dashboard');
+        redirect(Auth::homePath());
     }
 }

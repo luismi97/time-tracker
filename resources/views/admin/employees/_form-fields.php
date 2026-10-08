@@ -25,9 +25,11 @@
                class="mt-1 w-full rounded-lg border-gray-300 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 focus:border-indigo-500 focus:ring-indigo-500">
     </div>
     <div>
-        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">Documento de identificacion</label>
-        <input type="text" name="document_id" value="<?= old('document_id', $employeeData['document_id'] ?? '') ?>"
+        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">Cedula</label>
+        <input type="text" name="document_id" required maxlength="50" placeholder="Ej: 1-2345-6789" value="<?= old('document_id', $employeeData['document_id'] ?? '') ?>"
                class="mt-1 w-full rounded-lg border-gray-300 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 focus:border-indigo-500 focus:ring-indigo-500">
+        <p class="mt-1 text-xs text-slate-400 dark:text-slate-500">En el kiosco el empleado confirma su identidad con los ultimos 5 digitos.</p>
+        <?php if ($error = field_error('document_id')): ?><p class="mt-1 text-sm text-red-600 dark:text-red-400"><?= e($error) ?></p><?php endif; ?>
     </div>
     <div class="sm:col-span-2">
         <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">Direccion</label>
@@ -41,7 +43,7 @@
         <?php if ($error = field_error('hire_date')): ?><p class="mt-1 text-sm text-red-600 dark:text-red-400"><?= e($error) ?></p><?php endif; ?>
     </div>
     <div>
-        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">Salario por hora ($)</label>
+        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">Salario por hora (<?= e(currency_symbol()) ?>)</label>
         <input type="number" step="0.01" min="0" name="hourly_rate" required value="<?= old('hourly_rate', (string) ($employeeData['hourly_rate'] ?? '')) ?>"
                class="mt-1 w-full rounded-lg border-gray-300 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 focus:border-indigo-500 focus:ring-indigo-500">
         <?php if ($error = field_error('hourly_rate')): ?><p class="mt-1 text-sm text-red-600 dark:text-red-400"><?= e($error) ?></p><?php endif; ?>

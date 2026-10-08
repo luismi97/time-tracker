@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Core\Database;
+use App\Core\Tenant;
 use App\Models\Employee;
 use App\Models\Role;
 use App\Models\User;
@@ -15,7 +16,7 @@ class EmployeeService
         $pdo->beginTransaction();
 
         try {
-            $userId = User::create($data['email'], $data['password'], Role::EMPLOYEE);
+            $userId = User::create($data['email'], $data['password'], Role::EMPLOYEE, Tenant::id());
             $employeeId = Employee::create($data, $userId);
             $pdo->commit();
             return $employeeId;

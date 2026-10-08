@@ -8,13 +8,13 @@ $is24h = !empty($settings['is_24_7']);
 $sameEveryDay = !empty($settings['same_hours_every_day']);
 ?>
 <div class="space-y-6 max-w-3xl">
-    <!-- General: nombre del sitio y logo -->
+    <!-- General: nombre de la empresa y logo -->
     <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-100 dark:border-slate-800 p-6">
         <h2 class="font-semibold text-slate-800 dark:text-slate-100 mb-4">General</h2>
         <form method="POST" action="/admin/settings/general" enctype="multipart/form-data" class="space-y-4">
             <?= csrf_field() ?>
             <div>
-                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">Nombre del sitio</label>
+                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">Nombre de la empresa</label>
                 <input type="text" name="app_name" required maxlength="100" value="<?= e($settings['app_name']) ?>"
                        class="mt-1 w-full max-w-full rounded-lg border-gray-300 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 focus:border-indigo-500 focus:ring-indigo-500">
             </div>
@@ -30,6 +30,18 @@ $sameEveryDay = !empty($settings['same_hours_every_day']);
                            class="text-sm text-slate-600 dark:text-slate-300 file:mr-3 file:rounded-lg file:border-0 file:bg-slate-100 dark:file:bg-slate-800 file:px-3 file:py-2 file:text-sm file:font-medium file:text-slate-700 dark:file:text-slate-200">
                 </div>
                 <p class="mt-1 text-xs text-slate-400 dark:text-slate-500">PNG, JPG, WEBP o SVG. Maximo 2MB.</p>
+            </div>
+            <div>
+                <label for="currency" class="block text-sm font-medium text-slate-700 dark:text-slate-300">Moneda</label>
+                <select id="currency" name="currency"
+                        class="mt-1 w-full sm:w-64 rounded-lg border-gray-300 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 focus:border-indigo-500 focus:ring-indigo-500">
+                    <?php foreach (\App\Models\Settings::CURRENCIES as $code => $currency): ?>
+                        <option value="<?= e($code) ?>" <?= ($settings['currency'] ?? 'USD') === $code ? 'selected' : '' ?>>
+                            <?= e($currency['name'] . ' (' . $currency['symbol'] . ')') ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+                <p class="mt-1 text-xs text-slate-400 dark:text-slate-500">Se usa en salarios, reportes y PDFs. Solo cambia el simbolo: los montos guardados no se convierten.</p>
             </div>
             <button class="rounded-lg bg-indigo-600 px-5 py-2.5 text-white font-medium hover:bg-indigo-700">Guardar general</button>
         </form>
@@ -58,11 +70,39 @@ $sameEveryDay = !empty($settings['same_hours_every_day']);
                     <span class="block font-medium text-slate-800 dark:text-slate-100">Con codigo de empleado (kiosco)</span>
                     <span class="block text-xs text-slate-500 dark:text-slate-400">
                         Los empleados marcan su entrada/salida escribiendo su numero de empleado en
-                        <a href="/kiosk" target="_blank" class="underline">/kiosk</a>, sin iniciar sesion.
+                        <a href="<?= e($kioskUrl) ?>" target="_blank" class="underline"><?= e($kioskUrl) ?></a>, sin iniciar sesion.
                     </span>
                 </span>
             </label>
             <button class="rounded-lg bg-indigo-600 px-5 py-2.5 text-white font-medium hover:bg-indigo-700">Guardar modo</button>
+        </form>
+    </div>
+
+    <!-- Seguridad de red: desde donde pueden marcar los empleados -->
+    <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-100 dark:border-slate-800 p-6">
+        <h2 class="font-semibold text-slate-800 dark:text-slate-100 mb-1">Red autorizada para empleados</h2>
+        <p class="text-sm text-slate-500 dark:text-slate-400 mb-4">
+            Si agregas direcciones, los empleados solo podran iniciar sesion y usar el kiosco desde esas redes;
+            si salen de la red, su sesion se cierra. Los administradores pueden entrar desde cualquier lugar.
+            Dejalo vacio para no restringir.
+        </p>
+        <form method="POST" action="/admin/settings/network" class="space-y-3">
+            <?= csrf_field() ?>
+            <div>
+                <label for="allowed-ips" class="block text-sm font-medium text-slate-700 dark:text-slate-300">IPs o rangos autorizados (uno por linea)</label>
+                <textarea id="allowed-ips" name="allowed_ips" rows="4" placeholder="190.10.20.30&#10;190.10.20.0/24"
+                          class="mt-1 w-full rounded-lg border-gray-300 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 font-mono text-sm focus:border-indigo-500 focus:ring-indigo-500"><?= e($settings['allowed_ips'] ?? '') ?></textarea>
+            </div>
+            <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-slate-600 dark:text-slate-300">
+                <span>Tu IP actual: <span class="font-mono font-medium"><?= e($clientIp) ?></span></span>
+                <button type="button" id="add-current-ip" data-ip="<?= e($clientIp) ?>"
+                        class="font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300">+ Agregar mi IP actual</button>
+            </div>
+            <p class="text-xs text-slate-400 dark:text-slate-500">
+                Usa la IP publica de la conexion a internet del negocio (la que ves arriba estando conectado ahi),
+                no la IP interna de cada equipo (192.168.x.x). Si el proveedor de internet cambia esa IP, actualizala aqui.
+            </p>
+            <button class="rounded-lg bg-indigo-600 px-5 py-2.5 text-white font-medium hover:bg-indigo-700">Guardar red</button>
         </form>
     </div>
 

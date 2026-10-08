@@ -1,4 +1,16 @@
 document.addEventListener('DOMContentLoaded', () => {
+    const addIpButton = document.getElementById('add-current-ip');
+    const allowedIps = document.getElementById('allowed-ips');
+    if (addIpButton && allowedIps) {
+        addIpButton.addEventListener('click', () => {
+            const ip = addIpButton.dataset.ip;
+            const lines = allowedIps.value.split(/[\s,]+/).filter(Boolean);
+            if (ip && !lines.includes(ip)) {
+                allowedIps.value = [...lines, ip].join('\n');
+            }
+        });
+    }
+
     const is24h = document.getElementById('is-24h');
     const is7Days = document.getElementById('is-7-days');
     const sameDayField = document.getElementById('same-day-field');

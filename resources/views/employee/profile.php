@@ -5,7 +5,7 @@
         <div class="py-3 flex justify-between"><dt class="text-slate-500 dark:text-slate-400">Correo</dt><dd class="font-medium text-slate-800 dark:text-slate-100"><?= e($employee['email']) ?></dd></div>
         <div class="py-3 flex justify-between"><dt class="text-slate-500 dark:text-slate-400">Telefono</dt><dd class="font-medium text-slate-800 dark:text-slate-100"><?= e($employee['phone'] ?? '-') ?></dd></div>
         <div class="py-3 flex justify-between"><dt class="text-slate-500 dark:text-slate-400">Direccion</dt><dd class="font-medium text-slate-800 dark:text-slate-100"><?= e($employee['address'] ?? '-') ?></dd></div>
-        <div class="py-3 flex justify-between"><dt class="text-slate-500 dark:text-slate-400">Documento</dt><dd class="font-medium text-slate-800 dark:text-slate-100"><?= e($employee['document_id'] ?? '-') ?></dd></div>
+        <div class="py-3 flex justify-between"><dt class="text-slate-500 dark:text-slate-400">Cedula</dt><dd class="font-medium text-slate-800 dark:text-slate-100"><?= e($employee['document_id'] ?? '-') ?></dd></div>
         <div class="py-3 flex justify-between"><dt class="text-slate-500 dark:text-slate-400">Fecha de ingreso</dt><dd class="font-medium text-slate-800 dark:text-slate-100"><?= format_date($employee['hire_date']) ?></dd></div>
     </dl>
     <p class="mt-4 text-xs text-slate-400 dark:text-slate-500">La informacion salarial es visible unicamente para el administrador.</p>

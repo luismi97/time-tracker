@@ -17,13 +17,19 @@
                 <span class="truncate"><?= e(site_name()) ?></span>
             </div>
             <nav class="px-3 py-4 space-y-1 text-sm">
-                <?php if (\App\Core\Auth::isAdmin()): ?>
+                <?php if (\App\Core\Auth::isSuperAdmin()): ?>
+                    <?= nav_link('/super/companies', 'Empresas') ?>
+                    <?php if (\App\Core\Auth::canManageCompany()): ?>
+                        <p class="px-3 pt-4 pb-1 text-xs font-semibold uppercase tracking-wide text-slate-500 truncate"><?= e(site_name()) ?></p>
+                    <?php endif; ?>
+                <?php endif; ?>
+                <?php if (\App\Core\Auth::canManageCompany()): ?>
                     <?= nav_link('/admin/dashboard', 'Dashboard') ?>
                     <?= nav_link('/admin/employees', 'Empleados') ?>
                     <?= nav_link('/admin/attendance', 'Registros') ?>
                     <?= nav_link('/admin/reports', 'Reportes') ?>
                     <?= nav_link('/admin/settings', 'Configuracion') ?>
-                <?php else: ?>
+                <?php elseif (\App\Core\Auth::isEmployee()): ?>
                     <?= nav_link('/employee/dashboard', 'Mi panel') ?>
                     <?= nav_link('/employee/attendance', 'Mis registros') ?>
                     <?= nav_link('/employee/profile', 'Mi perfil') ?>
@@ -51,6 +57,15 @@
                 </div>
             </header>
             <main class="flex-1 p-4 lg:p-8">
+                <?php if (\App\Core\Auth::isSuperAdmin() && \App\Core\Auth::canManageCompany()): ?>
+                <div class="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/30 px-4 py-3 text-sm text-amber-800 dark:text-amber-300">
+                    <span>Estas gestionando <strong><?= e(site_name()) ?></strong> como super administrador.</span>
+                    <form method="POST" action="/super/exit">
+                        <?= csrf_field() ?>
+                        <button class="font-medium underline hover:text-amber-900 dark:hover:text-amber-200">Volver a empresas</button>
+                    </form>
+                </div>
+                <?php endif; ?>
                 <?php require VIEWS_PATH . '/partials/alerts.php'; ?>
                 <?= $content ?>
             </main>

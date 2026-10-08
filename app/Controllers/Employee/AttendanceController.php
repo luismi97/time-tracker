@@ -4,6 +4,7 @@ namespace App\Controllers\Employee;
 
 use App\Core\Auth;
 use App\Core\Paginator;
+use App\Core\Tenant;
 use App\Models\AttendanceRecord;
 use App\Models\Settings;
 use App\Services\AttendanceService;
@@ -24,6 +25,7 @@ class AttendanceController
             'paginator' => $paginator,
             'openRecord' => AttendanceRecord::openFor($employee['id']),
             'kioskMode' => Settings::get()['attendance_mode'] === 'kiosk',
+            'kioskUrl' => '/kiosk/' . rawurlencode(Tenant::company()['slug']),
         ]);
     }
 

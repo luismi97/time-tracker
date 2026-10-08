@@ -21,12 +21,20 @@ class LoginController
             redirect('/login');
         }
 
-        if (!Auth::attempt($email, $password)) {
+        $user = Auth::validateCredentials($email, $password);
+        if (!$user) {
             flash('error', 'Credenciales invalidas o cuenta inactiva.');
             redirect('/login');
         }
 
-        redirect(Auth::isAdmin() ? '/admin/dashboard' : '/employee/dashboard');
+        if (!Auth::networkAllowed($user)) {
+            flash('error', Auth::NETWORK_DENIED_MESSAGE);
+            redirect('/login');
+        }
+
+        Auth::login($user);
+
+        redirect(Auth::homePath());
     }
 
     public function destroy(): void

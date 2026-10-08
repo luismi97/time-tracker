@@ -2,8 +2,10 @@
 
 namespace App\Controllers\Admin;
 
+use App\Core\Tenant;
 use App\Models\BusinessHours;
 use App\Models\Settings;
+use App\Support\IpAccess;
 
 class SettingsController
 {
@@ -21,6 +23,8 @@ class SettingsController
             'title' => 'Configuracion',
             'settings' => Settings::get(),
             'businessHours' => BusinessHours::all(),
+            'kioskUrl' => '/kiosk/' . rawurlencode(Tenant::company()['slug']),
+            'clientIp' => IpAccess::clientIp(),
         ]);
     }
 
@@ -28,7 +32,7 @@ class SettingsController
     {
         $appName = trim($_POST['app_name'] ?? '');
         if ($appName === '') {
-            flash('error', 'El nombre del sitio es obligatorio.');
+            flash('error', 'El nombre de la empresa es obligatorio.');
             redirect('/admin/settings');
         }
 
@@ -42,7 +46,12 @@ class SettingsController
             $logoPath = $uploaded;
         }
 
-        Settings::updateGeneral($appName, $logoPath);
+        $currency = $_POST['currency'] ?? 'USD';
+        if (!isset(Settings::CURRENCIES[$currency])) {
+            $currency = 'USD';
+        }
+
+        Settings::updateGeneral($appName, $logoPath, $currency);
         flash('success', 'Configuracion general actualizada.');
         redirect('/admin/settings');
     }
@@ -56,6 +65,24 @@ class SettingsController
 
         Settings::updateAttendanceMode($mode);
         flash('success', 'Modo de registro de horas actualizado.');
+        redirect('/admin/settings');
+    }
+
+    /** Red autorizada desde donde los empleados pueden iniciar sesion y usar el kiosco. */
+    public function updateNetwork(): void
+    {
+        $rules = array_values(array_unique(IpAccess::parse($_POST['allowed_ips'] ?? '')));
+        $invalid = array_filter($rules, fn (string $rule) => !IpAccess::isValidRule($rule));
+
+        if ($invalid) {
+            flash('error', 'Direcciones no validas: ' . implode(', ', $invalid) . '. Usa una IP (190.10.20.30) o un rango CIDR (190.10.20.0/24).');
+            redirect('/admin/settings');
+        }
+
+        Settings::updateAllowedIps($rules);
+        flash('success', $rules
+            ? 'Red autorizada actualizada. Los empleados solo podran entrar desde esas direcciones.'
+            : 'Restriccion de red desactivada: los empleados pueden entrar desde cualquier red.');
         redirect('/admin/settings');
     }
 
