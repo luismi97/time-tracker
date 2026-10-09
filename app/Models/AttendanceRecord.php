@@ -65,8 +65,7 @@ class AttendanceRecord
                 return ['success' => false, 'message' => 'La hora de salida debe ser posterior a la entrada.'];
             }
 
-            $hours = round(($now->getTimestamp() - $clockIn->getTimestamp()) / 3600, 2);
-            $overtime = round(max(0, $hours - $overtimeThreshold), 2);
+            [$hours, $overtime] = self::computeHours($clockIn, $now, $overtimeThreshold);
 
             $stmt = $pdo->prepare(
                 "UPDATE attendance_records SET clock_out = ?, hours_worked = ?, overtime_hours = ?, status = 'closed' WHERE id = ?"
@@ -89,7 +88,8 @@ class AttendanceRecord
     public static function forEmployeeInRange(int $employeeId, string $start, string $end): array
     {
         $stmt = Database::connection()->prepare(
-            'SELECT * FROM attendance_records WHERE employee_id = ? AND work_date BETWEEN ? AND ?
+            'SELECT attendance_records.*, (SELECT COUNT(*) FROM attendance_edits WHERE attendance_edits.attendance_record_id = attendance_records.id) AS edit_count
+             FROM attendance_records WHERE employee_id = ? AND work_date BETWEEN ? AND ?
              ORDER BY work_date ASC, clock_in ASC'
         );
         $stmt->execute([$employeeId, $start, $end]);
@@ -99,7 +99,8 @@ class AttendanceRecord
     public static function paginateForEmployee(int $employeeId, int $limit, int $offset): array
     {
         $stmt = Database::connection()->prepare(
-            "SELECT * FROM attendance_records WHERE employee_id = ?
+            "SELECT attendance_records.*, (SELECT COUNT(*) FROM attendance_edits WHERE attendance_edits.attendance_record_id = attendance_records.id) AS edit_count
+             FROM attendance_records WHERE employee_id = ?
              ORDER BY work_date DESC, clock_in DESC LIMIT $limit OFFSET $offset"
         );
         $stmt->execute([$employeeId]);
@@ -138,7 +139,7 @@ class AttendanceRecord
     public static function paginateAll(array $filters, int $limit, int $offset): array
     {
         [$where, $params] = self::buildFilters($filters);
-        $sql = "SELECT attendance_records.*, employees.full_name
+        $sql = "SELECT attendance_records.*, employees.full_name, (SELECT COUNT(*) FROM attendance_edits WHERE attendance_edits.attendance_record_id = attendance_records.id) AS edit_count
                 FROM attendance_records JOIN employees ON employees.id = attendance_records.employee_id
                 $where ORDER BY attendance_records.work_date DESC, attendance_records.clock_in DESC
                 LIMIT $limit OFFSET $offset";
@@ -191,6 +192,69 @@ class AttendanceRecord
         );
         $stmt->execute([Tenant::id()]);
         return $stmt->fetchAll();
+    }
+
+    /** Marca de la empresa activa, con datos del empleado (edicion por administradores). */
+    public static function findForCompany(int $id): ?array
+    {
+        $stmt = Database::connection()->prepare(
+            'SELECT attendance_records.*, employees.full_name, employees.employee_number
+             FROM attendance_records JOIN employees ON employees.id = attendance_records.employee_id
+             WHERE attendance_records.id = ? AND employees.company_id = ?'
+        );
+        $stmt->execute([$id, Tenant::id()]);
+        return $stmt->fetch() ?: null;
+    }
+
+    /** Marca de un empleado especifico (edicion por el propio empleado). */
+    public static function findForEmployee(int $id, int $employeeId): ?array
+    {
+        $stmt = Database::connection()->prepare('SELECT * FROM attendance_records WHERE id = ? AND employee_id = ?');
+        $stmt->execute([$id, $employeeId]);
+        return $stmt->fetch() ?: null;
+    }
+
+    /**
+     * true si el rango [entrada, salida] choca con otra marca del empleado. Las marcas
+     * abiertas (y un rango sin salida) se consideran abiertas hasta ahora.
+     */
+    public static function overlapsOther(int $employeeId, int $excludeId, DateTimeImmutable $clockIn, ?DateTimeImmutable $clockOut): bool
+    {
+        $end = ($clockOut ?? new DateTimeImmutable('now'))->format('Y-m-d H:i:s');
+        $stmt = Database::connection()->prepare(
+            'SELECT COUNT(*) FROM attendance_records
+             WHERE employee_id = ? AND id != ? AND clock_in < ? AND COALESCE(clock_out, NOW()) > ?'
+        );
+        $stmt->execute([$employeeId, $excludeId, $end, $clockIn->format('Y-m-d H:i:s')]);
+        return (int) $stmt->fetchColumn() > 0;
+    }
+
+    /** Guarda nuevas horas de una marca y recalcula horas trabajadas, extra, fecha y estado. */
+    public static function updateTimes(int $id, DateTimeImmutable $clockIn, ?DateTimeImmutable $clockOut, int $overtimeThreshold): void
+    {
+        [$hours, $overtime] = $clockOut ? self::computeHours($clockIn, $clockOut, $overtimeThreshold) : [null, 0];
+
+        $stmt = Database::connection()->prepare(
+            'UPDATE attendance_records
+             SET work_date = ?, clock_in = ?, clock_out = ?, hours_worked = ?, overtime_hours = ?, status = ?
+             WHERE id = ?'
+        );
+        $stmt->execute([
+            $clockIn->format('Y-m-d'),
+            $clockIn->format('Y-m-d H:i:s'),
+            $clockOut?->format('Y-m-d H:i:s'),
+            $hours,
+            $overtime,
+            $clockOut ? 'closed' : 'open',
+            $id,
+        ]);
+    }
+
+    /** @return array{0: float, 1: float} Horas trabajadas y horas extra (sobre el umbral diario). */
+    private static function computeHours(DateTimeImmutable $clockIn, DateTimeImmutable $clockOut, int $overtimeThreshold): array
+    {
+        $hours = round(($clockOut->getTimestamp() - $clockIn->getTimestamp()) / 3600, 2);
+        return [$hours, round(max(0, $hours - $overtimeThreshold), 2)];
     }
 
     public static function todayFor(int $employeeId): ?array

@@ -64,6 +64,8 @@ $router->group(['prefix' => 'admin', 'middleware' => ['auth', 'admin']], functio
     $router->post('/employees/{id}/toggle-status', [EmployeeController::class, 'toggleStatus']);
 
     $router->get('/attendance', [AdminAttendanceController::class, 'index']);
+    $router->get('/attendance/{id}/edit', [AdminAttendanceController::class, 'edit']);
+    $router->post('/attendance/{id}', [AdminAttendanceController::class, 'update']);
 
     $router->get('/reports', [ReportController::class, 'create']);
     $router->post('/reports/preview', [ReportController::class, 'preview']);
@@ -82,6 +84,8 @@ $router->group(['prefix' => 'employee', 'middleware' => ['auth', 'employee']], f
     $router->get('/attendance', [EmployeeAttendanceController::class, 'index']);
     $router->post('/attendance/clock-in', [EmployeeAttendanceController::class, 'clockIn']);
     $router->post('/attendance/clock-out', [EmployeeAttendanceController::class, 'clockOut']);
+    $router->get('/attendance/{id}/edit', [EmployeeAttendanceController::class, 'edit']);
+    $router->post('/attendance/{id}', [EmployeeAttendanceController::class, 'update']);
 
     $router->get('/profile', [ProfileController::class, 'index']);
 });

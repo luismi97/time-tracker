@@ -59,6 +59,7 @@
                     <th class="py-3 px-5">Horas</th>
                     <th class="py-3 px-5">Extra</th>
                     <th class="py-3 px-5">Estado</th>
+                    <th class="py-3 px-5 text-right">Acciones</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-100 dark:divide-slate-800">
@@ -74,11 +75,15 @@
                         <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium <?= $record['status'] === 'closed' ? 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300' : 'bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300' ?>">
                             <?= $record['status'] === 'closed' ? 'Cerrado' : 'Abierto' ?>
                         </span>
+                        <?php if (!empty($record['edit_count'])): ?>
+                        <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-sky-100 dark:bg-sky-900/40 text-sky-800 dark:text-sky-300" title="Marca modificada manualmente">Editado</span>
+                        <?php endif; ?>
                     </td>
+                    <td class="py-3 px-5 text-right"><a href="/admin/attendance/<?= $record['id'] ?>/edit" class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-medium">Editar</a></td>
                 </tr>
                 <?php endforeach; ?>
                 <?php if (!$records): ?>
-                <tr><td colspan="7" class="py-6 text-center text-slate-400 dark:text-slate-500">No hay registros con los filtros seleccionados.</td></tr>
+                <tr><td colspan="8" class="py-6 text-center text-slate-400 dark:text-slate-500">No hay registros con los filtros seleccionados.</td></tr>
                 <?php endif; ?>
             </tbody>
         </table>
@@ -89,9 +94,14 @@
         <div class="p-4">
             <div class="flex items-start justify-between gap-2">
                 <p class="font-medium text-slate-800 dark:text-slate-100 truncate"><?= e($record['full_name']) ?></p>
-                <span class="shrink-0 inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium <?= $record['status'] === 'closed' ? 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300' : 'bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300' ?>">
-                    <?= $record['status'] === 'closed' ? 'Cerrado' : 'Abierto' ?>
-                </span>
+                <div class="shrink-0 flex flex-wrap justify-end gap-1">
+                    <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium <?= $record['status'] === 'closed' ? 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300' : 'bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300' ?>">
+                        <?= $record['status'] === 'closed' ? 'Cerrado' : 'Abierto' ?>
+                    </span>
+                    <?php if (!empty($record['edit_count'])): ?>
+                    <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-sky-100 dark:bg-sky-900/40 text-sky-800 dark:text-sky-300" title="Marca modificada manualmente">Editado</span>
+                    <?php endif; ?>
+                </div>
             </div>
             <dl class="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 text-sm">
                 <div><dt class="text-xs text-slate-400 dark:text-slate-500">Fecha</dt><dd class="dark:text-slate-300"><?= format_date($record['work_date']) ?></dd></div>
@@ -100,6 +110,7 @@
                 <div><dt class="text-xs text-slate-400 dark:text-slate-500">Salida</dt><dd class="dark:text-slate-300"><?= format_time($record['clock_out']) ?></dd></div>
                 <div><dt class="text-xs text-slate-400 dark:text-slate-500">Extra</dt><dd class="dark:text-slate-300"><?= $record['overtime_hours'] !== null ? format_hours((float) $record['overtime_hours']) : '-' ?></dd></div>
             </dl>
+            <div class="mt-3 text-sm"><a href="/admin/attendance/<?= $record['id'] ?>/edit" class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-medium">Editar</a></div>
         </div>
         <?php endforeach; ?>
         <?php if (!$records): ?>

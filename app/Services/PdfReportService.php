@@ -72,13 +72,19 @@ class PdfReportService
             $pdf->Cell($widths[2], 7, $record['clock_out'] ? substr($record['clock_out'], 11, 5) : '-', 1, 0, 'C');
             $pdf->Cell($widths[3], 7, $record['hours_worked'] !== null ? number_format((float) $record['hours_worked'], 2) : '-', 1, 0, 'C');
             $pdf->Cell($widths[4], 7, $record['overtime_hours'] !== null ? number_format((float) $record['overtime_hours'], 2) : '-', 1, 0, 'C');
-            $pdf->Cell($widths[5], 7, $record['status'] === 'closed' ? 'Cerrado' : 'Abierto', 1, 0, 'C');
+            $status = ($record['status'] === 'closed' ? 'Cerrado' : 'Abierto') . (!empty($record['edit_count']) ? ' *' : '');
+            $pdf->Cell($widths[5], 7, $status, 1, 0, 'C');
             $pdf->Ln();
         }
 
         if (!$records) {
             $pdf->SetFont('Arial', 'I', 9);
             $pdf->Cell(array_sum($widths), 8, 'Sin registros en el periodo seleccionado.', 1, 1, 'C');
+        }
+
+        if (array_filter($records, fn (array $record) => !empty($record['edit_count']))) {
+            $pdf->SetFont('Arial', 'I', 8);
+            $pdf->Cell(0, 6, '* Marca modificada manualmente (ver historial en el sistema).', 0, 1);
         }
 
         $summary = $this->payroll->summarize($records, $employee);

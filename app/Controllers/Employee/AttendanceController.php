@@ -5,8 +5,10 @@ namespace App\Controllers\Employee;
 use App\Core\Auth;
 use App\Core\Paginator;
 use App\Core\Tenant;
+use App\Models\AttendanceEdit;
 use App\Models\AttendanceRecord;
 use App\Models\Settings;
+use App\Services\AttendanceEditService;
 use App\Services\AttendanceService;
 
 class AttendanceController
@@ -27,6 +29,44 @@ class AttendanceController
             'kioskMode' => Settings::get()['attendance_mode'] === 'kiosk',
             'kioskUrl' => '/kiosk/' . rawurlencode(Tenant::company()['slug']),
         ]);
+    }
+
+    /** El empleado corrige una de sus marcas; la justificacion es obligatoria y queda registrada. */
+    public function edit(string $id): void
+    {
+        $record = $this->findOwnRecordOrFail($id);
+
+        view('employee/attendance/edit', [
+            'title' => 'Modificar marca',
+            'record' => $record,
+            'edits' => AttendanceEdit::forRecord((int) $record['id']),
+        ]);
+    }
+
+    public function update(string $id): void
+    {
+        $record = $this->findOwnRecordOrFail($id);
+        $errors = (new AttendanceEditService())->update($record, $_POST);
+
+        if ($errors) {
+            flash('errors', $errors);
+            flash('old', $_POST);
+            redirect("/employee/attendance/{$record['id']}/edit");
+        }
+
+        flash('success', 'Marca modificada. El cambio y tu justificacion quedaron registrados.');
+        redirect('/employee/attendance');
+    }
+
+    private function findOwnRecordOrFail(string $id): array
+    {
+        $record = AttendanceRecord::findForEmployee((int) $id, (int) Auth::employee()['id']);
+        if (!$record) {
+            flash('error', 'Marca no encontrada.');
+            redirect('/employee/attendance');
+        }
+
+        return $record;
     }
 
     public function clockIn(): void

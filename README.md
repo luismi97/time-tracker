@@ -196,6 +196,21 @@ servidor:
 Si el administrador activo el modo kiosco (ver Configuracion), esta pantalla no
 muestra los botones y en su lugar enlaza al kiosco de su empresa.
 
+### Modificar marcas (empleados y administradores)
+
+En `Mis registros` el empleado puede **Editar** sus propias marcas (por ejemplo, si
+olvido marcar la salida), y el administrador puede editar cualquier marca de su empresa
+desde `Registros`. En ambos casos la **justificacion es obligatoria** (minimo 10
+caracteres). Se valida que la salida sea posterior a la entrada, que no haya horas en
+el futuro, que la jornada no supere 24 h y que no se cruce con otra marca del
+empleado; las horas trabajadas y extra se recalculan.
+
+Cada cambio queda en la tabla `attendance_edits`: quien lo hizo (usuario, rol y
+correo, que se conserva aunque el usuario se elimine), cuando, desde que IP, los
+valores anteriores y nuevos, y la justificacion. Las marcas modificadas muestran la
+etiqueta "Editado" en los listados y un asterisco en el PDF; la pantalla de edicion
+muestra el historial completo.
+
 ### Kiosco de asistencia con codigo de empleado
 
 Cuando `Configuracion > Registro de horas` esta en modo "kiosco", cualquier persona

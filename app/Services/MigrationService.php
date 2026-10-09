@@ -121,6 +121,7 @@ class MigrationService
             '011' => $this->columnExists('settings', 'allowed_ips'),
             '012' => $this->columnExists('settings', 'currency'),
             '013' => $this->columnExists('employees', 'is_paid'),
+            '014' => $this->tableExists('attendance_edits'),
             default => false,
         };
     }
